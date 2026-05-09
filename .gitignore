@@ -1,0 +1,14 @@
+# База данных
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.рус
+.venv
+venv/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
