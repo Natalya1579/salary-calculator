@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash, check_password_hash
 from db import db
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -10,7 +11,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)  # Храним хэш, не пароль
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     salary_reports = db.relationship(
@@ -21,6 +22,14 @@ class User(UserMixin, db.Model):
     favorites = db.relationship('Favorite', foreign_keys='Favorite.user_id', backref='user', lazy=True)
     following = db.relationship('Follow', foreign_keys='Follow.follower_id', backref='follower', lazy=True)
     followers = db.relationship('Follow', foreign_keys='Follow.followed_id', backref='followed', lazy=True)
+
+    # Метод, который превращает пароль в хеш и сохраняет в password_hash
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    # Метод, который проверяет: правильный ли пароль ввел пользователь
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<User {self.username}>'
