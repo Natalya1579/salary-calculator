@@ -78,6 +78,42 @@ def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/add-salary', methods=['GET', 'POST'])
+@login_required
+def add_salary():
+    if request.method == 'POST':
+        profession_title = request.form['profession_title']
+        city = request.form['city']
+        salary = int(request.form['salary'])
+        work_format = request.form.get('work_format', 'office')
+        grade = request.form.get('grade', 'middle')
+        is_anonymous = 'is_anonymous' in request.form
+
+        # Находим или создаем профессию
+        profession = Profession.query.filter_by(title=profession_title).first()
+        if not profession:
+            profession = Profession(title=profession_title)
+            db.session.add(profession)
+            db.session.commit()
+
+        # Создаем отчет
+        report = SalaryReport(
+            profession_id=profession.id,
+            city=city,
+            salary=salary,
+            work_format=work_format,
+            grade=grade,
+            is_anonymous=is_anonymous,
+            user_id=None if is_anonymous else current_user.id
+        )
+        db.session.add(report)
+        db.session.commit()
+
+        flash('Зарплата добавлена анонимно' if is_anonymous else 'Зарплата добавлена', 'success')
+        return redirect(url_for('profession_stats', profession_id=profession.id))
+    return render_template('add_salary.html', title='Добавить зарплату')
+
+
 # Запуск
 if __name__ == '__main__':
     with app.app_context():
