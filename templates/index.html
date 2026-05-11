@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="text-align: center;">
+    <h1>
+        <span class="material-icons">currency_ruble</span> Калькулятор реальных зарплат
+    </h1>
+    <p style="font-size: 18px; margin: 20px 0;">
+        Узнайте, сколько на самом деле платят специалистам вашего профиля.<br>
+        Все данные добавляются пользователями.
+    </p>
+    <div style="margin: 40px 0;">
+        <h3>
+            <span class="material-icons">rocket_launch</span> Быстрый старт
+        </h3>
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+            <a href="/professions" class="btn">Посмотреть профессии</a>
+            <a href="/add-salary" class="btn" style="background: #27ae60;">Добавить свою зарплату
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

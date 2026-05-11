@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Добавить информацию о зарплате</h2>
+    <form method="POST">
+        <div style="margin-bottom: 15px;">
+            <label>Профессия:</label>
+            <input type="text" name="profession_title" placeholder="Например: Python разработчик" required style="width: 100%; padding: 8px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Город:</label>
+            <input type="text" name="city" placeholder="Москва" required style="width: 100%; padding: 8px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Зарплата (₽):</label>
+            <input type="number" name="salary" required style="width: 100%; padding: 8px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Формат работы:</label>
+            <select type="text" name="work_format" style="width: 100%; padding: 8px;">
+                <option value="office">Офис</option>
+                <option value="remote">Удалёнка</option>
+                <option value="hybrid">Гибрид</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Грейд:</label>
+            <select type="text" name="grade" style="width: 100%; padding: 8px;">
+                <option value="junior">Junior</option>
+                <option value="middle">Middle</option>
+                <option value="senior">Senior</option>
+                <option value="lead">Lead</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>
+                <input type="checkbox" name="is_anonymous" checked>Опубликовать анонимно
+            </label>
+        </div>
+        <button type="submit">Добавить</button>
+    </form>
+</div>
+{% endblock %}

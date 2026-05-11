@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Моё избранное</h2>
+{% if professions %}
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        {% for prof in professions %}
+           <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+               <div>
+                   <a href="/profession/{{ prof.id }}">{{ prof.title }}</a>
+               </div>
+               <div>
+                   <a href="/favorite/{{ prof.id }}" class="btn" style="background: #e74c3c;">
+                       <span class="material-icons">delete</span> Удалить
+                   </a>
+               </div>
+           </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>У вас пока нет избранных профессий.</p>
+    <p>Перейдите на страницу профессии и нажмите "В избранное"</p>
+    <a href="/professions" class="btn">Посмотреть профессии</a>
+{% endif %}
+{% endblock %}
