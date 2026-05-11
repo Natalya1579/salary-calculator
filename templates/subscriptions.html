@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Подписки</h2>
+    {% if reports %}
+        <ul style="list-style: none; padding: 0;">
+            {% for report in reports %}
+            <li style="padding: 20px; border-bottom: 1px solid #ddd;">
+                <div style="font-size: 18px; font-weight: bold;">
+                    {{ report.salary }} ₽ - {{ report.city }}
+                    <span style="float: right;">
+                        <a href="/follow/{{ report.user_id }}" class="btn" style="background: #e74c3c";>
+                        Отписаться
+                        </a>
+                    </span>
+                </div>
+                <div style="color: #666; margin-top: 5px;">
+                    Профессия: {{ report.profession.title }} | Грейд: {{ report.grade }}
+                </div>
+                <div style="color: #888; margin-top: 5px; font-size: 14px;">
+                    {{ report.author.username }} | {{ report.created_at.strftime('%d.%m.%Y') }}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>У вас нет подписок. Подпишитесь на авторов на страницах профессий.</p>
+        <a href="{{ url_for('professions_list') }}" class="btn">Смотреть профессии
+        </a>
+    {% endif %}
+</div>
+{% endblock %}

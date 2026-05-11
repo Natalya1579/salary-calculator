@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import config
 from db import db
-from models import User, Profession, SalaryReport, Favorite
+from models import User, Profession, SalaryReport, Favorite, Follow
 import statistics
 
 # Создаем приложение
@@ -142,6 +142,11 @@ def profession_page(id):
     # Находим все зарплаты для этой профессии
     reports = SalaryReport.query.filter_by(profession_id=id).all()
 
+    # Создаем список подписок текущего пользователя
+    following_users = []
+    if current_user.is_authenticated:
+        following_users = [follow.followed_id for follow in current_user.following]
+
     # Количество зарплат для этой профессии
     count = len(reports)
 
@@ -222,10 +227,11 @@ def profession_page(id):
                            reports=reports,
                            city_stats=sorted_cities,
                            work_format_stats=sorted_work_formats,
-                           grade_stats=sorted_grades)
+                           grade_stats=sorted_grades,
+                           following_users=following_users)
 
 
-# Добавить/удалить из избранного
+# Добавить/удалить избранное
 @app.route('/favorite/<int:profession_id>')
 @login_required     # Проверяем, залогинен ли пользователь
 def toggle_favorite(profession_id):
@@ -258,6 +264,56 @@ def favorites():
     professions = [fav.profession for fav in favs if fav.profession]
 
     return render_template('favorites.html', professions=professions)
+
+
+# Подписаться/отписаться от автора
+@app.route('/follow/<int:author_id>')
+@login_required
+def toggle_follow(author_id):
+    if author_id == current_user.id:
+        flash('Нельзя подписаться на себя', 'error')
+        return redirect(request.referrer or url_for('profession_page', id=profession_id))
+
+    # Проверяем,есть ли уже подписка
+    existing = Follow.query.filter_by(
+        follower_id=current_user.id,
+        followed_id=author_id
+    ).first()
+
+    if existing:
+        db.session.delete(existing)
+        flash('Вы отписались от пользователя', 'success')
+    else:
+        follow = Follow(
+            follower_id=current_user.id,
+            followed_id=author_id
+        )
+        db.session.add(follow)
+        flash('Вы подписались на пользователя', 'success')
+
+    db.session.commit()
+    next_url = request.args.get('next')
+    if next_url:
+        return redirect(next_url)
+    return redirect(request.referrer or url_for('index'))
+
+
+# Подписки пользователя
+@app.route('/subscriptions')
+@login_required
+def subscriptions():
+    follows = Follow.query.filter_by(follower_id=current_user.id).all()
+    followed_users = [f.followed_id for f in follows]
+
+    # Если есть подписки, показываем зарплаты этих авторов
+    if not followed_users:
+        return render_template('subscriptions.html', reports=[])
+
+    reports = SalaryReport.query.filter(
+        SalaryReport.user_id.in_(followed_users)
+    ).order_by(SalaryReport.created_at.desc()).limit(50).all()
+
+    return render_template('subscriptions.html', reports=reports)
 
 
 # Запуск
