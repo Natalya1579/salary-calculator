@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-import config
+from flask import Flask, flash, redirect, render_template, request, url_for
+from flask_login import (LoginManager, current_user, login_required,
+                         login_user, logout_user)
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from db import db
-from models import User, Profession, SalaryReport, Favorite, Follow
-import statistics
+from models import Favorite, Follow, Profession, SalaryReport, User
 
 # Создаем приложение
 app = Flask(__name__)
@@ -18,6 +18,7 @@ db.init_app(app)        # теперь db знает про app
 # Настраиваем вход пользователей
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'  # если не залогинен, отправлять на логин
+
 
 # Найти пользователя по номеру
 @login_manager.user_loader
@@ -52,7 +53,9 @@ def register():
 
         # Создаем нового пользователя
         hashed_password = generate_password_hash(password)
-        user = User(username=username, email=email, password_hash=hashed_password)
+        user = User(
+            username=username, email=email, password_hash=hashed_password
+        )
         db.session.add(user)
         db.session.commit()
 
@@ -119,7 +122,11 @@ def add_salary():
         db.session.add(report)
         db.session.commit()
 
-        flash('Зарплата добавлена анонимно' if is_anonymous else 'Зарплата добавлена', 'success')
+        flash(
+            'Зарплата добавлена анонимно' if is_anonymous
+            else 'Зарплата добавлена',
+            'success'
+        )
         return redirect(url_for('profession_page', id=profession.id))
     return render_template('add_salary.html', title='Добавить зарплату')
 
@@ -127,7 +134,9 @@ def add_salary():
 @app.route('/professions')
 def professions_list():
     professions = Profession.query.all()
-    return render_template('professions.html', professions=professions, title='Профессии')
+    return render_template(
+        'professions.html', professions=professions, title='Профессии'
+    )
 
 
 @app.route('/profession/<int:id>')
@@ -145,7 +154,7 @@ def profession_page(id):
     # Создаем список подписок текущего пользователя
     following_users = []
     if current_user.is_authenticated:
-        following_users = [follow.followed_id for follow in current_user.following]
+        following_users = [f.followed_id for f in current_user.following]
 
     # Количество зарплат для этой профессии
     count = len(reports)
@@ -183,7 +192,9 @@ def profession_page(id):
         city_stats[city] = sum(salaries) // len(salaries)
 
     # Сортировка по городам
-    sorted_cities = sorted(city_stats.items(), key=lambda x: x[1], reverse=True)
+    sorted_cities = sorted(
+        city_stats.items(), key=lambda x: x[1], reverse=True
+    )
 
     # Считаем статистику по формату работы
     work_formats = {}
@@ -199,7 +210,9 @@ def profession_page(id):
         work_format_stats[work_format] = sum(salaries) // len(salaries)
 
     # Сортировка по формату работы
-    sorted_work_formats = sorted(work_format_stats.items(), key=lambda x: x[1], reverse=True)
+    sorted_work_formats = sorted(
+        work_format_stats.items(), key=lambda x: x[1], reverse=True
+    )
 
     # Считаем статистику по грейдам
     grades = {}
@@ -215,7 +228,9 @@ def profession_page(id):
         grade_stats[grade] = sum(salaries) // len(salaries)
 
     # Сортировка по грейду
-    sorted_grades = sorted(grade_stats.items(), key=lambda x: x[1], reverse=True)
+    sorted_grades = sorted(
+        grade_stats.items(), key=lambda x: x[1], reverse=True
+    )
 
     # Передаем в шаблон
     return render_template('profession.html',
@@ -235,6 +250,7 @@ def profession_page(id):
 @app.route('/favorite/<int:profession_id>')
 @login_required     # Проверяем, залогинен ли пользователь
 def toggle_favorite(profession_id):
+
     # Проверяем, есть ли уже в избранном
     existing = Favorite.query.filter_by(
         user_id=current_user.id,
@@ -272,7 +288,9 @@ def favorites():
 def toggle_follow(author_id):
     if author_id == current_user.id:
         flash('Нельзя подписаться на себя', 'error')
-        return redirect(request.referrer or url_for('profession_page', id=profession_id))
+        return redirect(
+            request.referrer or url_for('profession_page', id=author_id)
+        )
 
     # Проверяем,есть ли уже подписка
     existing = Follow.query.filter_by(
