@@ -123,6 +123,12 @@
                 <span class="material-icons">add</span> Добавить зарплату
             </a>
 
+            {% if current_user.is_authenticated %}
+                <a href="/favorites">
+                    <span class="material-icons">star</span> Избранное
+                </a>
+            {% endif %}
+
             <div class="nav-right">
                 {% if current_user.is_authenticated %}
                     <span class="username">{{ current_user.username }}</span>

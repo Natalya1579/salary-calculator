@@ -19,7 +19,7 @@ class User(UserMixin, db.Model):
         backref='author',  # автоматически добавляет 'author' в SalaryReport
         lazy=True          # объекты загружаются из БД только когда нужны
     )
-    favorites = db.relationship('Favorite', foreign_keys='Favorite.user_id', backref='user', lazy=True)
+    favorites = db.relationship('Favorite', foreign_keys='Favorite.user_id', back_populates='user', lazy=True)
     following = db.relationship('Follow', foreign_keys='Follow.follower_id', backref='follower', lazy=True)
     followers = db.relationship('Follow', foreign_keys='Follow.followed_id', backref='followed', lazy=True)
 
@@ -47,6 +47,7 @@ class Profession(db.Model):
     salary_reports = db.relationship(
         'SalaryReport', backref='profession', lazy=True
     )
+    favorited_by = db.relationship('Favorite', back_populates='profession', lazy=True)
 
     def __repr__(self):
         return f'<Profession {self.title}>'
@@ -78,6 +79,9 @@ class Favorite(db.Model):
     profession_id = db.Column(db.Integer, db.ForeignKey('professions.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    user = db.relationship('User', back_populates='favorites')
+    profession = db.relationship('Profession', back_populates='favorited_by')
+
     def __repr__(self):
         return f'<Favorite {self.user_id} {self.profession_id}>'
 
@@ -89,3 +93,6 @@ class Follow(db.Model):
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)   # кто подписался
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)   # на кого подписались
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'Follow {self.follower_id} -> {self.followed_id}'

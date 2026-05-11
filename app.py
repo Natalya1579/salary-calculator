@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import config
 from db import db
-from models import User, Profession, SalaryReport
+from models import User, Profession, SalaryReport, Favorite
 import statistics
 
 # Создаем приложение
@@ -72,8 +72,6 @@ def login():
 
         # Проверяем пароль
         if user and check_password_hash(user.password_hash, password):
-            # session['user_id'] = user.id
-            # session['username'] = user.username
             login_user(user)
             flash(f'Добро пожаловать, {user.username}!', 'success')
             return redirect(url_for('index'))
@@ -225,6 +223,41 @@ def profession_page(id):
                            city_stats=sorted_cities,
                            work_format_stats=sorted_work_formats,
                            grade_stats=sorted_grades)
+
+
+# Добавить/удалить из избранного
+@app.route('/favorite/<int:profession_id>')
+@login_required     # Проверяем, залогинен ли пользователь
+def toggle_favorite(profession_id):
+    # Проверяем, есть ли уже в избранном
+    existing = Favorite.query.filter_by(
+        user_id=current_user.id,
+        profession_id=profession_id
+    ).first()
+
+    if existing:
+        # Удаляем из избранного
+        db.session.delete(existing)
+        flash('Профессия удалена из избранного', 'success')
+    else:
+        # Добавляем в избранное
+        fav = Favorite(user_id=current_user.id, profession_id=profession_id)
+        db.session.add(fav)
+        flash('Профессия добавлена в избранное', 'success')
+
+    db.session.commit()
+    return redirect(url_for('profession_page', id=profession_id))
+
+
+# Страница избранного
+@app.route('/favorites')
+@login_required     # Проверяем, залогинен ли пользователь
+def favorites():
+    # Находим все избранные профессии пользователя
+    favs = Favorite.query.filter_by(user_id=current_user.id).all()
+    professions = [fav.profession for fav in favs if fav.profession]
+
+    return render_template('favorites.html', professions=professions)
 
 
 # Запуск
