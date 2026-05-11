@@ -5,15 +5,15 @@
     <h2>Регистрация</h2>
     <form method="POST" action="{{ url_for('register') }}">
         <div style="margin-bottom: 15px;">
-            <label>Имя пользователя:</label>
+            <label>Имя пользователя:</label><br>
             <input type="text" name="username" required style="width: 100%; padding: 8px; margin-top: 5px;">
         </div>
         <div style="margin-bottom: 15px;">
-            <label>Email:</label>
+            <label>Email:</label><br>
             <input type="email" name="email" required style="width: 100%; padding: 8px; margin-top: 5px;">
         </div>
         <div style="margin-bottom: 15px;">
-            <label>Пароль:</label>
+            <label>Пароль:</label><br>
             <input type="password" name="password" required style="width: 100%; padding: 8px; margin-top: 5px;">
         </div>
         <button type="submit">Зарегистрироваться</button>

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>{{ profession.title }}</h2>
+    {% if count > 0 %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 15px; margin: 20px 0;">
+            <div style="background: #e8f4f8; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <strong>Отчетов:</strong> {{ count }}
+            </div>
+            <div style="background: #d5f4e6; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <strong>Средняя:</strong> {{ "{:,.0f}".format(average).replace(","," ") }} ₽
+            </div>
+            <div style="background: #f8d7da; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <strong>Минимальная:</strong> {{ "{:,.0f}".format(min_salary).replace(","," ") }} ₽
+            </div>
+            <div style="background: #d1ecf1; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <strong>Максимальная:</strong> {{ "{:,.0f}".format(max_salary).replace(","," ") }} ₽
+            </div>
+        </div>
+
+        {% if city_stats %}
+        <div style="margin: 20px 0;">
+            <h3>По городам</h3>
+            <ul>
+                {% for city, avg in city_stats %}
+                    <li>{{ city }}: {{ "{:,.0f}".format(avg).replace(","," ") }} ₽</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if work_format_stats %}
+        <div style="margin: 20px 0;">
+            <h3>По формату работы</h3>
+            <ul>
+                {% for fmt, avg in work_format_stats %}
+                <li>{{ fmt }}: {{ "{:,.0f}".format(avg).replace(","," ") }} ₽</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if grade_stats %}
+        <div style="margin: 20px 0;">
+            <h3>По грейду</h3>
+            <ul>
+                {% for grade, avg in grade_stats %}
+                <li>{{ grade }}: {{ "{:,.0f}".format(avg).replace(","," ") }} ₽</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 20px;">
+            <a href="/add-salary" class="btn">
+                <span class="material-icons">add</span>Добавить зарплату
+            </a>
+            {% if current_user.is_authenticated %}
+                <a href="#" class="btn" style="background: #f39c12;">
+                    <span class="material-icons">star</span> В избранное
+                </a>
+                <a href="#" class="btn" style="background: #2ecc71;">
+                    <span class="material-icons">notifications</span> Подписаться
+                </a>
+            {%  endif %}
+        </div>
+    {% else %}
+        <p>Пока нет данных о зарплатах. Будьте первым, кто добавит зарплату</p>
+        <a href="/add-salary" class="btn">Добавить зарплату</a>
+    {% endif %}
+</div>
+{% endblock %}

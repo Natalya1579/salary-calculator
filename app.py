@@ -4,6 +4,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 import config
 from db import db
 from models import User, Profession, SalaryReport
+import statistics
 
 # Создаем приложение
 app = Flask(__name__)
@@ -38,9 +39,15 @@ def register():
         password = request.form['password']
 
         # Проверяем, не занят ли пароль
-        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        existing_user = User.query.filter(User.username == username).first()
         if existing_user:
-            flash('Пользователь с таким именем или email уже существует', 'danger')
+            flash('Такой логин уже занят', 'danger')
+            return redirect(url_for('register'))
+
+        # Проверяем, не занят ли email
+        existing_email = User.query.filter(User.email == email).first()
+        if existing_email:
+            flash('Такой email уже зарегистрирован', 'danger')
             return redirect(url_for('register'))
 
         # Создаем нового пользователя
@@ -59,14 +66,19 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
+        # Ищем пользователя
         user = User.query.filter_by(username=username).first()
 
+        # Проверяем пароль
         if user and check_password_hash(user.password_hash, password):
+            # session['user_id'] = user.id
+            # session['username'] = user.username
             login_user(user)
-            flash(f'С возвращением, {username}!', 'success')
+            flash(f'Добро пожаловать, {user.username}!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Неверное имя пользователя или пароль', 'danger')
+            flash('Неверный логин или пароль', 'danger')
     return render_template('login.html', title='Вход')
 
 
@@ -96,7 +108,7 @@ def add_salary():
             db.session.add(profession)
             db.session.commit()
 
-        # Создаем отчет
+        # Создаем запись о зарплате
         report = SalaryReport(
             profession_id=profession.id,
             city=city,
@@ -110,8 +122,109 @@ def add_salary():
         db.session.commit()
 
         flash('Зарплата добавлена анонимно' if is_anonymous else 'Зарплата добавлена', 'success')
-        return redirect(url_for('profession_stats', profession_id=profession.id))
+        return redirect(url_for('profession_page', id=profession.id))
     return render_template('add_salary.html', title='Добавить зарплату')
+
+
+@app.route('/professions')
+def professions_list():
+    professions = Profession.query.all()
+    return render_template('professions.html', professions=professions, title='Профессии')
+
+
+@app.route('/profession/<int:id>')
+def profession_page(id):
+    # Находим профессию в БД
+    profession = Profession.query.get(id)
+
+    if not profession:
+        flash('Профессия не найдена', 'danger')
+        return redirect(url_for('professions_list'))
+
+    # Находим все зарплаты для этой профессии
+    reports = SalaryReport.query.filter_by(profession_id=id).all()
+
+    # Количество зарплат для этой профессии
+    count = len(reports)
+
+    if count > 0:
+        total = 0
+        for report in reports:
+            total += report.salary
+        average = total // count
+
+        min_salary = reports[0].salary
+        max_salary = reports[0].salary
+
+        for report in reports:
+            if report.salary < min_salary:
+                min_salary = report.salary
+            if report.salary > max_salary:
+                max_salary = report.salary
+    else:
+        average = 0
+        min_salary = 0
+        max_salary = 0
+
+    # Считаем статистику по городам
+    cities = {}
+    for report in reports:
+        if report.city not in cities:
+            cities[report.city] = [report.salary]
+        else:
+            cities[report.city].append(report.salary)
+
+    # Для каждого города считаем среднюю зарплату
+    city_stats = {}
+    for city, salaries in cities.items():
+        city_stats[city] = sum(salaries) // len(salaries)
+
+    # Сортировка по городам
+    sorted_cities = sorted(city_stats.items(), key=lambda x: x[1], reverse=True)
+
+    # Считаем статистику по формату работы
+    work_formats = {}
+    for report in reports:
+        if report.work_format not in work_formats:
+            work_formats[report.work_format] = [report.salary]
+        else:
+            work_formats[report.work_format].append(report.salary)
+
+    # Для каждого формата работы считаем среднюю зарплату
+    work_format_stats = {}
+    for work_format, salaries in work_formats.items():
+        work_format_stats[work_format] = sum(salaries) // len(salaries)
+
+    # Сортировка по формату работы
+    sorted_work_formats = sorted(work_format_stats.items(), key=lambda x: x[1], reverse=True)
+
+    # Считаем статистику по грейдам
+    grades = {}
+    for report in reports:
+        if report.grade not in grades:
+            grades[report.grade] = [report.salary]
+        else:
+            grades[report.grade].append(report.salary)
+
+    # Для каждого грейда считаем среднюю зарплату
+    grade_stats = {}
+    for grade, salaries in grades.items():
+        grade_stats[grade] = sum(salaries) // len(salaries)
+
+    # Сортировка по грейду
+    sorted_grades = sorted(grade_stats.items(), key=lambda x: x[1], reverse=True)
+
+    # Передаем в шаблон
+    return render_template('profession.html',
+                           profession=profession,
+                           count=count,
+                           average=average,
+                           min_salary=min_salary,
+                           max_salary=max_salary,
+                           reports=reports,
+                           city_stats=sorted_cities,
+                           work_format_stats=sorted_work_formats,
+                           grade_stats=sorted_grades)
 
 
 # Запуск
